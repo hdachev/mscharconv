@@ -23,9 +23,9 @@ using ulong32 = std::conditional_t<sizeof(unsigned long) == 4, unsigned long, ui
 #   define MSCHARCONV_FORCE_INLINE __attribute__((always_inline)) inline
 #endif
 
-#define MSCHARCONF_ASSERT_MSG(cnd, msg) assert(cnd)
+#define MSCHARCONV_ASSERT_MSG(cnd, msg) assert(cnd)
 
-inline void ms_verify_range(const char* first, const char* last) { assert(first <= last); }
+#define MSCHARCONV_VERIFY_RANGE(first, last) { assert(first <= last); }
 
 template <class To, class From>
 To bit_cast(const From& val) noexcept {
@@ -38,7 +38,10 @@ To bit_cast(const From& val) noexcept {
 #endif
 }
 
-#if !defined(_MSC_VER)
+// intrinsics
+#if defined(_WIN32)
+#   include <intrin.h>
+#else
 inline char _BitScanForward(uint32_t* bit, uint32_t n) {
     if (!n) return 0;
     *bit = uint32_t(__builtin_ctz(n));
@@ -61,52 +64,74 @@ inline char _BitScanReverse64(uint32_t* bit, uint64_t n) {
 }
 #endif
 
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 10
+#define MSCHARCONV_DISABLE_WARNINGS \
+     _Pragma("GCC diagnostic push") \
+     _Pragma("GCC diagnostic ignored \"-Wunused-but-set-variable\"") \
+     _Pragma("GCC diagnostic ignored \"-Wunused-but-set-parameter\"") \
+    /*preserve this line*/
+#define MSCHARCONV_REENABLE_WARNINGS _Pragma("GCC diagnostic pop")
+#else
+#define MSCHARCONV_DISABLE_WARNINGS
+#define MSCHARCONV_REENABLE_WARNINGS
+#endif
+
+MSCHARCONV_DISABLE_WARNINGS
+
 #include "converted/m_floating_type_traits.inl"
 #include "converted/xbit_ops.h.inl"
 #include "converted/xcharconv_ryu_tables.h.inl"
 #include "converted/xcharconv_ryu.h.inl"
 #include "converted/charconv.inl"
 
+MSCHARCONV_REENABLE_WARNINGS
+
 } // namespace impl
 
-inline to_chars_result to_chars(char* first, char* last, const char val, int base) noexcept { return impl::to_chars(first, last, val, base); }
-inline to_chars_result to_chars(char* first, char* last, signed char val, int base) noexcept { return impl::to_chars(first, last, val, base); }
-inline to_chars_result to_chars(char* first, char* last, unsigned char val, int base) noexcept { return impl::to_chars(first, last, val, base); }
-inline to_chars_result to_chars(char* first, char* last, short val, int base) noexcept { return impl::to_chars(first, last, val, base); }
-inline to_chars_result to_chars(char* first, char* last, unsigned short val, int base) noexcept { return impl::to_chars(first, last, val, base); }
-inline to_chars_result to_chars(char* first, char* last, int val, int base) noexcept { return impl::to_chars(first, last, val, base); }
-inline to_chars_result to_chars(char* first, char* last, unsigned int val, int base) noexcept { return impl::to_chars(first, last, val, base); }
-inline to_chars_result to_chars(char* first, char* last, long val, int base) noexcept { return impl::to_chars(first, last, val, base); }
-inline to_chars_result to_chars(char* first, char* last, unsigned long val, int base) noexcept { return impl::to_chars(first, last, val, base); }
-inline to_chars_result to_chars(char* first, char* last, long long val, int base) noexcept { return impl::to_chars(first, last, val, base); }
-inline to_chars_result to_chars(char* first, char* last, unsigned long long val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+#if !defined(MSCHARCONV_IMPLEMENT)
+#   define MSCCHARCONV_I inline
+#else
+#   define MSCCHARCONV_I
+#endif
 
-inline to_chars_result to_chars(char* first, char* last, float val) noexcept { return impl::to_chars(first, last, val); }
-inline to_chars_result to_chars(char* first, char* last, double val) noexcept { return impl::to_chars(first, last, val); }
-inline to_chars_result to_chars(char* first, char* last, long double val) noexcept { return impl::to_chars(first, last, val); }
-inline to_chars_result to_chars(char* first, char* last, float val, chars_format fmt) noexcept { return impl::to_chars(first, last, val, fmt); }
-inline to_chars_result to_chars(char* first, char* last, double val, chars_format fmt) noexcept { return impl::to_chars(first, last, val, fmt); }
-inline to_chars_result to_chars(char* first, char* last, long double val, chars_format fmt) noexcept { return impl::to_chars(first, last, val, fmt); }
-inline to_chars_result to_chars(char* first, char* last, float val, chars_format fmt, int precision) noexcept { return impl::to_chars(first, last, val, fmt, precision); }
-inline to_chars_result to_chars(char* first, char* last, double val, chars_format fmt, int precision) noexcept { return impl::to_chars(first, last, val, fmt, precision); }
-inline to_chars_result to_chars(char* first, char* last, long double val, chars_format fmt, int precision) noexcept { return impl::to_chars(first, last, val, fmt, precision); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, const char val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, signed char val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, unsigned char val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, short val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, unsigned short val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, int val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, unsigned int val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, long val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, unsigned long val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, long long val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, unsigned long long val, int base) noexcept { return impl::to_chars(first, last, val, base); }
+
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, float val) noexcept { return impl::to_chars(first, last, val); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, double val) noexcept { return impl::to_chars(first, last, val); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, long double val) noexcept { return impl::to_chars(first, last, val); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, float val, chars_format fmt) noexcept { return impl::to_chars(first, last, val, fmt); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, double val, chars_format fmt) noexcept { return impl::to_chars(first, last, val, fmt); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, long double val, chars_format fmt) noexcept { return impl::to_chars(first, last, val, fmt); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, float val, chars_format fmt, int precision) noexcept { return impl::to_chars(first, last, val, fmt, precision); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, double val, chars_format fmt, int precision) noexcept { return impl::to_chars(first, last, val, fmt, precision); }
+MSCCHARCONV_I to_chars_result to_chars(char* first, char* last, long double val, chars_format fmt, int precision) noexcept { return impl::to_chars(first, last, val, fmt, precision); }
 
 
-inline from_chars_result from_chars(const char* first, const char* last, char& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
-inline from_chars_result from_chars(const char* first, const char* last, signed char& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
-inline from_chars_result from_chars(const char* first, const char* last, unsigned char& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
-inline from_chars_result from_chars(const char* first, const char* last, short& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
-inline from_chars_result from_chars(const char* first, const char* last, unsigned short& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
-inline from_chars_result from_chars(const char* first, const char* last, int& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
-inline from_chars_result from_chars(const char* first, const char* last, unsigned int& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
-inline from_chars_result from_chars(const char* first, const char* last, long& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
-inline from_chars_result from_chars(const char* first, const char* last, unsigned long& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
-inline from_chars_result from_chars(const char* first, const char* last, long long& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
-inline from_chars_result from_chars(const char* first, const char* last, unsigned long long& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, char& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, signed char& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, unsigned char& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, short& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, unsigned short& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, int& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, unsigned int& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, long& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, unsigned long& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, long long& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, unsigned long long& val, int base) noexcept { return impl::from_chars(first, last, val, base); }
 
-inline from_chars_result from_chars(const char* first, const char* last, float& val, chars_format fmt) noexcept { return impl::from_chars(first, last, val, fmt); }
-inline from_chars_result from_chars(const char* first, const char* last, double& val, chars_format fmt) noexcept { return impl::from_chars(first, last, val, fmt); }
-inline from_chars_result from_chars(const char* first, const char* last, long double& val, chars_format fmt) noexcept { return impl::from_chars(first, last, val, fmt); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, float& val, chars_format fmt) noexcept { return impl::from_chars(first, last, val, fmt); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, double& val, chars_format fmt) noexcept { return impl::from_chars(first, last, val, fmt); }
+MSCCHARCONV_I from_chars_result from_chars(const char* first, const char* last, long double& val, chars_format fmt) noexcept { return impl::from_chars(first, last, val, fmt); }
 
 
 } // namespace msstl
